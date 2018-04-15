@@ -6,6 +6,7 @@ import android.os.Build;
 import android.support.annotation.IntRange;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -17,6 +18,7 @@ import android.view.ViewGroup;
 
 public class FlowLayout extends ViewGroup {
 
+    public static final String TAG = FlowLayout.class.getName();
     public static final int HORIZONTAL = 0;
     public static final int VERTICAL = 1;
 
@@ -60,17 +62,12 @@ public class FlowLayout extends ViewGroup {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        switch (widthMode) {
-            default: {
-                break;
-            }
-        }
-        switch (heightMode) {
-            default: {
-                break;
-            }
+        mWidth = MeasureSpec.getSize(widthMeasureSpec);
+        mHeight = MeasureSpec.getSize(heightMeasureSpec);
+        int n = getChildCount();
+        for (int i = 0; i < n; i++) {
+            View child = getChildAt(i);
+            child.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
@@ -81,37 +78,66 @@ public class FlowLayout extends ViewGroup {
         mPaddingRight = getPaddingRight();
         mPaddingTop = getPaddingTop();
         mPaddingBottom = getPaddingBottom();
-        mHorizontalWidth += mPaddingLeft;
-        mVerticalHeight += mPaddingTop;
+        mHorizontalWidth = mPaddingLeft;
+        mVerticalHeight = mPaddingTop;
         findMaxChildWidthAndHeight();
         if (mOrientation == HORIZONTAL) {
-            layoutHorizontalFlow(changed, l, t, r, b);
+            layoutHorizontalFlow();
         } else if (mOrientation == VERTICAL) {
-            layoutVerticalFlow(changed, l, t, r, b);
+            layoutVerticalFlow();
         }
     }
 
-    private void layoutVerticalFlow(boolean changed, int l, int t, int r, int b) {
-        // TODO: 2018/4/13 竖直方向流式布局
-    }
-
-    private void layoutHorizontalFlow(boolean changed, int l, int t, int r, int b) {
-        // TODO: 2018/4/13 水平方向流式布局
+    private void layoutVerticalFlow() {
+        //竖直方向流式布局
         int childCount = getChildCount();
         if (childCount > 0) {
             for (int i = 0; i < childCount; i++) {
                 View childView = getChildAt(i);
                 MarginLayoutParams layoutParams = (MarginLayoutParams) childView.getLayoutParams();
-                int childWidth = childView.getWidth();
+                int childWidth = childView.getMeasuredWidth();
+                int childHeight = childView.getMeasuredHeight();
+                int childMarginLeft = layoutParams.leftMargin;
+                int childMarginTop = layoutParams.topMargin;
+                int childMarginBottom = layoutParams.bottomMargin;
+                int totalHeight = childHeight + childMarginTop + childMarginBottom;
+                if (mVerticalHeight + totalHeight > mHeight - mPaddingBottom) {
+                    //换列
+                    mVerticalHeight = mPaddingTop;
+                    mHorizontalWidth += maxChildWidth;
+                }
+                childView.layout(mHorizontalWidth + childMarginLeft,
+                        mVerticalHeight + childMarginTop,
+                        mHorizontalWidth + childWidth,
+                        mVerticalHeight + childHeight + childMarginTop);
+                mVerticalHeight += totalHeight;
+            }
+        }
+    }
+
+    private void layoutHorizontalFlow() {
+        //水平方向流式布局
+        int childCount = getChildCount();
+        if (childCount > 0) {
+            for (int i = 0; i < childCount; i++) {
+                View childView = getChildAt(i);
+                MarginLayoutParams layoutParams = (MarginLayoutParams) childView.getLayoutParams();
+                int childWidth = childView.getMeasuredWidth();
+                int childHeight = childView.getMeasuredHeight();
                 int childMarginLeft = layoutParams.leftMargin;
                 int childMarginRight = layoutParams.rightMargin;
+                int childMarginBottom = layoutParams.bottomMargin;
                 int totalWidth = childWidth + childMarginLeft + childMarginRight;
-                if (mHorizontalWidth + totalWidth > mWidth) {
+                if (mHorizontalWidth + totalWidth > mWidth - mPaddingRight) {
                     //换行
                     mHorizontalWidth = mPaddingLeft;
                     mVerticalHeight += maxChildHeight;
                 }
-                childView.layout(mHorizontalWidth + childMarginLeft, mVerticalHeight, mHorizontalWidth + totalWidth, mVerticalHeight + maxChildHeight);
+                childView.layout(mHorizontalWidth + childMarginLeft,
+                        mVerticalHeight + maxChildHeight - childHeight - childMarginBottom,
+                        mHorizontalWidth + totalWidth,
+                        mVerticalHeight + maxChildHeight);
+                mHorizontalWidth += totalWidth;
             }
         }
     }
@@ -134,9 +160,11 @@ public class FlowLayout extends ViewGroup {
     private void findMaxChildWidthAndHeight() {
         int n = getChildCount();
         for (int i = 0; i < n; i++) {
+            Log.i(TAG, "child: " + i);
             View child = getChildAt(i);
-            maxChildHeight = Math.max(maxChildHeight, child.getMeasuredHeight());
-            maxChildWidth = Math.max(maxChildWidth, child.getMeasuredWidth());
+            MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
+            maxChildHeight = Math.max(maxChildHeight, child.getMeasuredHeight() + layoutParams.topMargin + layoutParams.bottomMargin);
+            maxChildWidth = Math.max(maxChildWidth, child.getMeasuredWidth() + layoutParams.leftMargin + layoutParams.rightMargin);
         }
         //子控件宽高超过父控件宽高时，按父控件宽高处理
         maxChildHeight = Math.min(maxChildHeight, mHeight);

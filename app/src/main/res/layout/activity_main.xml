@@ -9,7 +9,8 @@
     <io.github.agaghd.flowlayout.FlowLayout
         android:id="@+id/flow_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent"
+        app:orientation="horizontal">
 
     </io.github.agaghd.flowlayout.FlowLayout>
 
