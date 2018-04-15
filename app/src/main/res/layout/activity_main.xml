@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             app:line_space_horizontal="8dp"
             app:line_space_vertical="8dp"
-            app:orientation="horizontal">
+            app:orientation="vertical">
 
         </io.github.agaghd.flowlayout.FlowLayout>
 
