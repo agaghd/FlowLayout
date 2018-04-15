@@ -5,6 +5,8 @@
             <enum name="horizontal" value="0" />
             <enum name="vertical" value="1" />
         </attr>
+        <attr name="line_space_horizontal" format="dimension" />
+        <attr name="line_space_vertical" format="dimension" />
     </declare-styleable>
 
 </resources>

@@ -25,6 +25,7 @@ public class FlowLayout extends ViewGroup {
     private int mVerticalHeight;
     private int mWidth = 0, mHeight = 0;
     private int maxChildHeight = 0, maxChildWidth = 0;
+    private int lineSpaceVertical = 0, lineSpaceHorizontal = 0;
     private int mPaddingLeft = 0, mPaddingRight = 0, mPaddingTop = 0, mPaddingBottom = 0;
 
     public FlowLayout(Context context) {
@@ -55,6 +56,11 @@ public class FlowLayout extends ViewGroup {
         if (index >= 0) {
             setOrientation(index);
         }
+        //获取行列间距
+        index = (int) a.getDimension(R.styleable.FlowLayout_line_space_horizontal, 0);
+        lineSpaceHorizontal = index >= 0 ? index : 0;
+        index = (int) a.getDimension(R.styleable.FlowLayout_line_space_vertical, 0);
+        lineSpaceVertical = index >= 0 ? index : 0;
         a.recycle();
     }
 
@@ -131,13 +137,13 @@ public class FlowLayout extends ViewGroup {
                 if (mVerticalHeight + totalHeight > mHeight - mPaddingBottom) {
                     //换列
                     mVerticalHeight = mPaddingTop;
-                    mHorizontalWidth += maxChildWidth;
+                    mHorizontalWidth += maxChildWidth + lineSpaceHorizontal;
                 }
                 childView.layout(mHorizontalWidth + childMarginLeft,
                         mVerticalHeight + childMarginTop,
                         mHorizontalWidth + childWidth,
                         mVerticalHeight + childHeight + childMarginTop);
-                mVerticalHeight += totalHeight;
+                mVerticalHeight += totalHeight + lineSpaceVertical;
             }
         }
     }
@@ -158,13 +164,13 @@ public class FlowLayout extends ViewGroup {
                 if (mHorizontalWidth + totalWidth > mWidth - mPaddingRight) {
                     //换行
                     mHorizontalWidth = mPaddingLeft;
-                    mVerticalHeight += maxChildHeight;
+                    mVerticalHeight += maxChildHeight + lineSpaceVertical;
                 }
                 childView.layout(mHorizontalWidth + childMarginLeft,
                         mVerticalHeight + maxChildHeight - childHeight - childMarginBottom,
                         mHorizontalWidth + totalWidth,
                         mVerticalHeight + maxChildHeight);
-                mHorizontalWidth += totalWidth;
+                mHorizontalWidth += totalWidth + lineSpaceHorizontal;
             }
         }
     }
@@ -201,9 +207,9 @@ public class FlowLayout extends ViewGroup {
                 if (height + totalHeight > mHeight - mPaddingBottom) {
                     //换列
                     height = mPaddingTop;
-                    width += maxChildWidth;
+                    width += maxChildWidth + lineSpaceHorizontal;
                 }
-                height += totalHeight;
+                height += totalHeight + lineSpaceVertical;
             }
         }
         return width;
@@ -229,9 +235,9 @@ public class FlowLayout extends ViewGroup {
                 if (width + totalWidth > mWidth - mPaddingRight) {
                     //换行
                     width = mPaddingLeft;
-                    height += maxChildHeight;
+                    height += maxChildHeight + lineSpaceVertical;
                 }
-                width += totalWidth;
+                width += totalWidth + lineSpaceHorizontal;
             }
         }
         return height;
