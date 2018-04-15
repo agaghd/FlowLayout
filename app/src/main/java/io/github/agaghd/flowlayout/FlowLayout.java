@@ -6,7 +6,6 @@ import android.os.Build;
 import android.support.annotation.IntRange;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -18,7 +17,6 @@ import android.view.ViewGroup;
 
 public class FlowLayout extends ViewGroup {
 
-    public static final String TAG = FlowLayout.class.getName();
     public static final int HORIZONTAL = 0;
     public static final int VERTICAL = 1;
 
@@ -62,14 +60,44 @@ public class FlowLayout extends ViewGroup {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        mWidth = MeasureSpec.getSize(widthMeasureSpec);
-        mHeight = MeasureSpec.getSize(heightMeasureSpec);
         int n = getChildCount();
         for (int i = 0; i < n; i++) {
             View child = getChildAt(i);
             child.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+            MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
+            int widthTotal = child.getMeasuredHeight() + layoutParams.topMargin + layoutParams.bottomMargin;
+            int heightTotal = child.getMeasuredWidth() + layoutParams.leftMargin + layoutParams.rightMargin;
+            maxChildWidth = Math.max(maxChildWidth, heightTotal);
+            maxChildHeight = Math.max(maxChildHeight, widthTotal);
         }
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        if (mOrientation == VERTICAL) {
+            mHeight = MeasureSpec.getSize(heightMeasureSpec);
+            switch (widthMode) {
+                case MeasureSpec.EXACTLY: {
+                    mWidth = MeasureSpec.getSize(widthMeasureSpec);
+                    break;
+                }
+                default: {
+                    mWidth = getWidthWhenHeightExactly();
+                    break;
+                }
+            }
+        } else {
+            mWidth = MeasureSpec.getSize(widthMeasureSpec);
+            switch (heightMode) {
+                case MeasureSpec.EXACTLY: {
+                    mHeight = MeasureSpec.getSize(heightMeasureSpec);
+                    break;
+                }
+                default: {
+                    mHeight = getHeightWhenWidthExactly();
+                    break;
+                }
+            }
+        }
+        setMeasuredDimension(mWidth, mHeight);
     }
 
     @Override
@@ -80,7 +108,6 @@ public class FlowLayout extends ViewGroup {
         mPaddingBottom = getPaddingBottom();
         mHorizontalWidth = mPaddingLeft;
         mVerticalHeight = mPaddingTop;
-        findMaxChildWidthAndHeight();
         if (mOrientation == HORIZONTAL) {
             layoutHorizontalFlow();
         } else if (mOrientation == VERTICAL) {
@@ -155,59 +182,80 @@ public class FlowLayout extends ViewGroup {
     }
 
     /**
-     * 找寻最大的子控件宽高，在onMeasure()之后调用
+     * 高度确定时，获取控件宽度
+     *
+     * @return 宽度
      */
-    private void findMaxChildWidthAndHeight() {
-        int n = getChildCount();
-        for (int i = 0; i < n; i++) {
-            Log.i(TAG, "child: " + i);
-            View child = getChildAt(i);
-            MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
-            maxChildHeight = Math.max(maxChildHeight, child.getMeasuredHeight() + layoutParams.topMargin + layoutParams.bottomMargin);
-            maxChildWidth = Math.max(maxChildWidth, child.getMeasuredWidth() + layoutParams.leftMargin + layoutParams.rightMargin);
+    private int getWidthWhenHeightExactly() {
+        int height = mPaddingTop;
+        int width = mPaddingLeft + maxChildWidth;
+        int childCount = getChildCount();
+        if (childCount > 0) {
+            for (int i = 0; i < childCount; i++) {
+                View childView = getChildAt(i);
+                MarginLayoutParams layoutParams = (MarginLayoutParams) childView.getLayoutParams();
+                int childHeight = childView.getMeasuredHeight();
+                int childMarginTop = layoutParams.topMargin;
+                int childMarginBottom = layoutParams.bottomMargin;
+                int totalHeight = childHeight + childMarginTop + childMarginBottom;
+                if (height + totalHeight > mHeight - mPaddingBottom) {
+                    //换列
+                    height = mPaddingTop;
+                    width += maxChildWidth;
+                }
+                height += totalHeight;
+            }
         }
-        //子控件宽高超过父控件宽高时，按父控件宽高处理
-        maxChildHeight = Math.min(maxChildHeight, mHeight);
-        maxChildWidth = Math.min(maxChildWidth, mWidth);
+        return width;
+    }
+
+    /**
+     * 宽度确定时，获取高度
+     *
+     * @return 控件高度
+     */
+    private int getHeightWhenWidthExactly() {
+        int height = mPaddingTop + maxChildHeight;
+        int width = mPaddingLeft;
+        int childCount = getChildCount();
+        if (childCount > 0) {
+            for (int i = 0; i < childCount; i++) {
+                View childView = getChildAt(i);
+                MarginLayoutParams layoutParams = (MarginLayoutParams) childView.getLayoutParams();
+                int childWidth = childView.getMeasuredWidth();
+                int childMarginLeft = layoutParams.leftMargin;
+                int childMarginRight = layoutParams.rightMargin;
+                int totalWidth = childWidth + childMarginLeft + childMarginRight;
+                if (width + totalWidth > mWidth - mPaddingRight) {
+                    //换行
+                    width = mPaddingLeft;
+                    height += maxChildHeight;
+                }
+                width += totalWidth;
+            }
+        }
+        return height;
     }
 
     @Override
-    public LayoutParams generateLayoutParams(AttributeSet attrs) {
-        return new LayoutParams(getContext(), attrs);
+    public ViewGroup.MarginLayoutParams generateLayoutParams(AttributeSet attrs) {
+        return new ViewGroup.MarginLayoutParams(getContext(), attrs);
+    }
+
+    @SuppressWarnings("ResourceType")
+    @Override
+    protected ViewGroup.MarginLayoutParams generateDefaultLayoutParams() {
+        return new ViewGroup.MarginLayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     }
 
     @Override
-    protected LayoutParams generateDefaultLayoutParams() {
-        return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    }
-
-    @Override
-    protected LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-        return new LayoutParams(p);
+    protected ViewGroup.MarginLayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+        return new ViewGroup.MarginLayoutParams(p);
     }
 
     @Override
     protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
-        return p instanceof LayoutParams;
+        return p instanceof ViewGroup.MarginLayoutParams;
     }
 
-    public static class LayoutParams extends ViewGroup.MarginLayoutParams {
-
-        public LayoutParams(Context c, AttributeSet attrs) {
-            super(c, attrs);
-        }
-
-        public LayoutParams(int width, int height) {
-            super(width, height);
-        }
-
-        public LayoutParams(MarginLayoutParams source) {
-            super(source);
-        }
-
-        public LayoutParams(ViewGroup.LayoutParams source) {
-            super(source);
-        }
-
-    }
 }

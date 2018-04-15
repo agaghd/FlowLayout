@@ -2,8 +2,8 @@
 <resources>
     <declare-styleable name="FlowLayout">
         <attr name="orientation" format="integer">
-            <enum name="vertical" value="0" />
-            <enum name="horizontal" value="1" />
+            <enum name="horizontal" value="0" />
+            <enum name="vertical" value="1" />
         </attr>
     </declare-styleable>
 

@@ -6,12 +6,19 @@
     android:layout_height="match_parent"
     tools:context="io.github.agaghd.flowlayout.MainActivity">
 
-    <io.github.agaghd.flowlayout.FlowLayout
-        android:id="@+id/flow_layout"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:orientation="horizontal">
+        android:layout_height="match_parent">
 
-    </io.github.agaghd.flowlayout.FlowLayout>
+        <io.github.agaghd.flowlayout.FlowLayout
+            android:id="@+id/flow_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:orientation="horizontal">
+
+        </io.github.agaghd.flowlayout.FlowLayout>
+
+    </ScrollView>
+
 
 </FrameLayout>
