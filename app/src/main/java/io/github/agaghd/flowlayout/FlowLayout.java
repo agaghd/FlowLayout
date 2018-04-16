@@ -188,6 +188,30 @@ public class FlowLayout extends ViewGroup {
     }
 
     /**
+     * 设置垂直方向间距的方法
+     *
+     * @param lineSpaceVertical 垂直方向的间距 单位dp
+     */
+    public void setLineSpaceVertical(int lineSpaceVertical) {
+        if (this.lineSpaceVertical != lineSpaceVertical) {
+            this.lineSpaceVertical = lineSpaceVertical;
+            requestLayout();
+        }
+    }
+
+    /**
+     * 设置水平方向间距的接口
+     *
+     * @param lineSpaceHorizontal 水平方向的间距 单位dp
+     */
+    public void setLineSpaceHorizontal(int lineSpaceHorizontal) {
+        if (this.lineSpaceHorizontal != lineSpaceHorizontal) {
+            this.lineSpaceHorizontal = lineSpaceHorizontal;
+            requestLayout();
+        }
+    }
+
+    /**
      * 高度确定时，获取控件宽度
      *
      * @return 宽度
